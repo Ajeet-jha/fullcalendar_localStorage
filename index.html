@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script type='text/javascript' src='js/jquery.min.js'></script>
+    <script type='text/javascript' src='js/moment.min.js'></script>
+    <link rel="shortcut icon" type="image/png"
+        href="https://previews.123rf.com/images/alekseyvanin/alekseyvanin1708/alekseyvanin170800565/83819981-calendar-with-clock-flat-icon-round-colorful-button-schedule-event-date-circular-sign-with-long-shad.jpg" />
+    <link rel='stylesheet' type='text/css' href='css/fullcalendar.min.css' />
+    <script type='text/javascript' src='js/fullcalendar.min.js'></script>
+    <title>fullCalendar</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <style>
+        .main {
+            max-width: 100%;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="row main">
+        <div class="container">
+            <div id='calendar'></div>
+        </div>
+    </div>
+
+    <script>
+        var events = JSON.parse(localStorage.getItem('events'));
+        if (events == undefined) {
+            events = [{
+                    id: "01",
+                    title: 'event1',
+                    start: '2019-04-03',
+                    end: '2019-04-03',
+                    discription: "test 1",
+                    color: "#ff0000",
+                    textColor: "white"
+                },
+                {
+                    id: "02",
+                    title: 'event2',
+                    start: '2019-04-04',
+                    discription: "test 2",
+                    color: "#0000ff",
+                    end: '2019-04-06'
+                },
+                {
+                    id: "03",
+                    title: 'event3',
+                    start: '2019-04-09',
+                    end: '2019-04-09',
+                    discription: "test 3",
+                    color: "#40ff00",
+                }
+            ];
+            localStorage.setItem('events', JSON.stringify(events));
+        }
+        $(document).ready(function () {
+            $("#calendar").fullCalendar({
+                header: {
+                    left: 'today,prev,next',
+                    center: 'title',
+                    right: 'month,basicWeek,basicDay'
+                },
+                dayClick: function (date, jsEvent, view) {
+                    $(this).css('background-color', '#ffe6e6');
+                    $("#calendarModal").modal();
+                },
+                eventSources: [{
+                    events: events,
+                }],
+                editable: true,
+                // allDayDefault: true,
+                //allDay: false,
+                //displayEventTime: false,
+                eventClick: function (calEvent, jsEvent, view) {
+                    $("#calendarModalLabel").html(calEvent.title);
+                    $("#sdate").val(calEvent.start.format());
+                    $("#keyId").val(calEvent.id).attr('disabled', 'disabled');
+                    if (calEvent.end) {
+                        $("#edate").val(calEvent.end.format())
+                    }
+                    $("#title").val(calEvent.title);
+                    $("#description").val(calEvent.discription);
+                    $("#color").val(calEvent.color);
+                    $("#calendarModal").modal();
+                    $("#deleteAgenda").click(function () {
+                        var items = localStorage.getItem("events");
+                        var eventsParse = JSON.parse(items);
+                        for (let i = 0; i < eventsParse.length; i++) {
+                            if (eventsParse[i].id === calEvent.id) {
+                                $('#calendar').fullCalendar('removeEvents', calEvent.id);
+                                eventsParse.splice(i, 1);
+                            }
+                        }
+                        localStorage.setItem('events', JSON.stringify(eventsParse));
+                    })
+                },
+                eventDrop: function (event) {
+                    if (event.end) {
+                        var endDate = event.end.format().toString();
+                    }
+                    var startDate = event.start.format().toString();
+
+                    var newSchedule = {
+                        id: event.id,
+                        title: event.title,
+                        start: startDate,
+                        end: endDate,
+                        discription: event.discription,
+                        color: event.color
+                    };
+                    var newScheduleLocal = JSON.parse(localStorage.getItem("events"));
+                    for (let i = 0; i < newScheduleLocal.length; i++) {
+                        if (newScheduleLocal[i].id === event.id) {
+                            newScheduleLocal.splice(i, 1, newSchedule);
+                        }
+                    }
+                    localStorage.setItem('events', JSON.stringify(newScheduleLocal));
+                },
+                eventResize: function (event) {
+                    var resizeSchedule = {
+                        id: event.id,
+                        title: event.title,
+                        start: event.start.format(),
+                        end: event.end.format(),
+                        discription: event.discription,
+                        color: event.color
+                    };
+                    var resizeScheduleLocal = JSON.parse(localStorage.getItem("events"));
+                    for (let i = 0; i < resizeScheduleLocal.length; i++) {
+                        if (resizeScheduleLocal[i].id === event.id) {
+                            resizeScheduleLocal.splice(i, 1, resizeSchedule);
+                        }
+                    }
+                    localStorage.setItem('events', JSON.stringify(resizeScheduleLocal));
+                }
+            })
+        })
+    </script>
+
+    <!-- Modal -->
+    <div class="modal fade" id="calendarModal" tabindex="-1" role="dialog" aria-labelledby="calendarModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="calendarModalLabel"></h5>
+                </div>
+                <div class="modal-body">
+                    <div class="row m-1">
+                        <div class="col-3">
+                            Unique Id
+                        </div>
+                        <div class="col-9">
+                            -><input type="text" name="keyId" id="keyId">
+                        </div>
+                    </div>
+                    <div class="row m-1">
+                        <div class="col-3">
+                            START DATE
+                        </div>
+                        <div class="col-9">
+                            -><input type="text" name="sdate" id="sdate" placeholder="YYYY-MM-DD">
+                        </div>
+                    </div>
+                    <div class="row m-1">
+                        <div class="col-3">
+                            END DATE
+                        </div>
+                        <div class="col-9">
+                            -><input type="text" name="edate" id="edate" placeholder="YYYY-MM-DD">
+                        </div>
+                    </div>
+                    <div class="row m-1">
+                        <div class="col-3">
+                            TITLE
+                        </div>
+                        <div class="col-9">
+                            -><input type="text" name="title" id="title">
+                        </div>
+                    </div>
+                    <div class="row m-1">
+                        <div class="col-3">
+                            DISCRIPTION
+                        </div>
+                        <div class="col-9">
+                            -><textarea name="description" id="description" row="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="row m-1">
+                        <div class="col-3">
+                            COLOR
+                        </div>
+                        <div class="col-9">
+                            -><input type="color" name="color" id="color" value="#ff0000">
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" id="deleteAgenda">Delete</button>
+                    <button type="button" class="btn btn-primary" id="saveAgenda">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $("#saveAgenda").click(function () {
+            var newAgenda = {
+                id: $("#keyId").val(),
+                title: $("#title").val(),
+                start: $("#sdate").val(),
+                end: $("#edate").val(),
+                discription: $("#description").val(),
+                color: $("#color").val(),
+            };
+
+            var ls_events = JSON.parse(localStorage.getItem("events"));
+            if (ls_events == undefined)
+                ls_events = [];
+            ls_events.push(newAgenda);
+            localStorage.setItem('events', JSON.stringify(ls_events));
+
+            $("#calendar").fullCalendar('renderEvent', newAgenda);
+            $("#calendarModal").modal("toggle");
+        })
+    </script>
+</body>
+
+</html>
